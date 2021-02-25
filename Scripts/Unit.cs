@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Unit : MonoBehaviour
 {
@@ -35,7 +36,7 @@ public class Unit : MonoBehaviour
         {
             if (currentPath == null)
             {
-                //CheckIfOnGateway();
+                //CheckIfOnOpenGateway();
                 return;
             }
 
@@ -50,15 +51,30 @@ public class Unit : MonoBehaviour
 
             if (currentPath.Count == 1)
             {
-                CheckIfOnGateway();
+                CheckIfOnOpenGateway();
                 currentPath = null;
             }
+            else if (remainingMovement == 0)
+                CheckIfOnOpenGateway();
         }        
     }
 
-    public void CheckIfOnGateway()
+    public void CheckIfOnOpenGateway()
     {
-        Vector3 currentPosition = transform.position;
-        Debug.Log("Current position = " + currentPosition.x + ", " + currentPosition.y);
+        int currentPositionX = (int)transform.position.x;
+        int currentPositionY = (int)transform.position.y;
+        Button exploreButton = GameObject.Find("ButtonExplore").GetComponent<Button>();
+        string tileName = map.GetTileTypeName(currentPositionX, currentPositionY);
+
+        if (tileName.Equals("DungeonGatewayOpen"))
+        {
+            Debug.Log("Unit on Open Gateway");
+            exploreButton.interactable = true;
+        }
+        else
+        {
+            Debug.Log("Unit NOT on Open Gateway");
+            exploreButton.interactable = false;
+        }
     }
 }

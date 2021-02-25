@@ -10,77 +10,227 @@ public class TileMap : MonoBehaviour
     List<Node> currentPath = null;
 
     public TileType[] tileTypes;
+    public Room[] rooms;
+    public GameObject nextRoomTemplate;
     public bool isCurrentRoom;
+    public Vector3 nextRoomPosition;
 
-    int[,] tiles;
-    Node[,] graph;
+    int mapSize = 100;
+    int[,] tiles = new int [100, 100];
+    //int[,] tiles;
+    Node[,] graph = new Node[100, 100];
+    //Node[,] graph;
 
     void Start()
     {
         //selectedUnit.GetComponent<Unit>().tileX = (int)selectedUnit.transform.position.x;
         //selectedUnit.GetComponent<Unit>().tileY = (int)selectedUnit.transform.position.y;
-        selectedUnit.GetComponent<Unit>().tileX = 1;
-        selectedUnit.GetComponent<Unit>().tileY = 1;
+        selectedUnit.GetComponent<Unit>().tileX = 50;
+        selectedUnit.GetComponent<Unit>().tileY = 50;
         selectedUnit.GetComponent<Unit>().map = this;
 
-        CreateEntranceMap();
+        CreateWorldMap();
+        CreateEntranceRoom();
         //GenerateMapData(4, 2);
         //GeneratePathfindingGraph(4, 2);
         //GenerateMapVisual(4, 2);
         //CreateAbandonedNest();
     }
 
-    void CreateEntranceMap()
+    void CreateWorldMap()
+    {
+        GenerateMapData(mapSize);
+        //GeneratePathfindingGraph(mapSize, mapSize);
+        //GenerateMapVisual(mapSize, mapSize);
+    }
+
+    void CreateEntranceRoom()
     {
         int mapSizeX = 4;
         int mapSizeY = 2;
+        int startingPointX = 49;
+        int startingPointY = 49;
 
-        GenerateMapData(mapSizeX, mapSizeY);
+        GenerateMapData(mapSizeX, mapSizeY, startingPointX, startingPointY);
 
-        tiles[0, 1] = 1;
-        tiles[3, 1] = 1;
-        tiles[1, 1] = 3;
-        tiles[2, 1] = 3;
+        tiles[startingPointX, startingPointY + 1] = 1;
+        tiles[startingPointX + 3, startingPointY + 1] = 1;
+        tiles[startingPointX + 1,startingPointY + 1] = 3;
+        tiles[startingPointX + 2, startingPointY + 1] = 3;
 
-        GeneratePathfindingGraph(mapSizeX, mapSizeY);
-        GenerateMapVisual(mapSizeX, mapSizeY);
+        GeneratePathfindingGraph(mapSizeX, mapSizeY, startingPointX, startingPointY);
+        GenerateMapVisual(mapSizeX, mapSizeY, startingPointX, startingPointY);
+    }
+
+    public string GetTileTypeName(int x, int y)
+    {
+        TileType tt = tileTypes[tiles[x, y]];
+        return tt.name;
     }
 
     public void ExploreNextRoom()
     {
+        int x = (int)selectedUnit.transform.position.x;
+        int y = (int)selectedUnit.transform.position.y;
+        Debug.Log("Selected Unit position: " + x + ", " + y);
 
+        //TODO: Implement this so that it detects valid placement positions for the gateways
+        //Change tint of room template when placement is valid or invalid
+        //Change so that gateway tiles are held on mouseposition
+        //Create tiles adjacent to existing gateways to allow placement on these
+
+
+        //nextRoomTemplate = Instantiate(Resources.Load("Prefabs/NextRoom", typeof(GameObject))) as GameObject;
+        //GameObject prefab;
+        nextRoomTemplate = Resources.Load<GameObject>("Prefabs/NestRoom") as GameObject;
+        RoomTemplate nextRoom = new RoomTemplate("Nest", 4, 4, 1, 0, Facing.South, 3, 2, Facing.East);
+        Debug.Log("Gateway One x Position " + nextRoom.GatewayOneX);
+        //Instantiate(nextRoomTemplate, new Vector3(x, y, 0), Quaternion.identity);
+        //Debug.Log(prefab.transform);
+        //GameObject nextRoomTemplate = Instantiate(prefab, new Vector3(x, y, 0), Quaternion.identity);
+
+        if (tiles[x, y] == 3)
+        {
+            Debug.Log("Unit on open gateway");
+            if (tiles[x - 1, y] == 3)
+            {
+                Debug.Log("Left adjacent square is also open gateway");
+                if (tiles[x, y + 1] == 5)
+                {
+                    Debug.Log("Above tiles are room entrances");
+                    Instantiate(nextRoomTemplate, new Vector3((x - 1) - nextRoom.GatewayOneX, y + 1, 0), Quaternion.identity);
+                    //foreach(Transform child in nextRoomTemplate.transform)
+                    //{
+                    //    child.
+                    //}
+                    //TODO: Add code to handle Room placement
+                    //Check that the new room gateways are sitting on acceptable tiles
+                    //Allow room rotation and check for collision with existing room
+                    //Room will be placed with left click - then call generation code again to generate the room and its map data
+                } 
+                else if (tiles[x, y - 1] == 5)
+                {
+                    Debug.Log("Below tiles are room entrances");
+                    Instantiate(nextRoomTemplate, new Vector3((x - 1) - nextRoom.GatewayOneX, y - 1, 0), Quaternion.identity);
+                }
+            } 
+            else if (tiles[x + 1, y] == 3)
+            {
+                Debug.Log("Right adjacent square is also open gateway");
+                if (tiles[x, y + 1] == 5)
+                {
+                    Debug.Log("Above tiles are room entrances");
+                    //Instantiate(nextRoomTemplate, new Vector3(x, y + 1, 0), Quaternion.identity);
+                    Instantiate(nextRoomTemplate, new Vector3(x - nextRoom.GatewayOneX, y + 1, 0), Quaternion.identity);
+                }
+                else if (tiles[x, y - 1] == 5)
+                {
+                    Debug.Log("Below tiles are room entrances");
+                    Instantiate(nextRoomTemplate, new Vector3(x - nextRoom.GatewayOneX, y - 1, 0), Quaternion.identity);
+                }
+            }
+            else if (tiles[x, y - 1] == 3)
+            {
+                Debug.Log("Bottom adjacent square is also open gateway");
+                if (tiles[x + 1, y] == 5)
+                {
+                    Debug.Log("Right tiles are room entrances");
+                    Instantiate(nextRoomTemplate, new Vector3(x + 1, (y - 1) - nextRoom.GatewayOneY, 0), Quaternion.identity);
+                }
+                else if (tiles[x - 1, y] == 5)
+                {
+                    Debug.Log("Left tiles are room entrances");
+                    Instantiate(nextRoomTemplate, new Vector3(x - 1, (y - 1) - nextRoom.GatewayOneY, 0), Quaternion.identity);
+                }
+            }
+            else if (tiles[x, y + 1] == 3)
+            {
+                Debug.Log("Top adjacent square is also open gateway");
+                if (tiles[x + 1, y] == 5)
+                {
+                    Debug.Log("Right tiles are room entrances");
+                    Instantiate(nextRoomTemplate, new Vector3(x + 1, y - nextRoom.GatewayOneY, 0), Quaternion.identity);
+                }
+                else if (tiles[x - 1, y] == 5)
+                {
+                    Debug.Log("Left tiles are room entrances");
+                    Instantiate(nextRoomTemplate, new Vector3(x - 1, y - nextRoom.GatewayOneY, 0), Quaternion.identity);
+                }
+            }
+        }
+        else if ((tiles[x, y] == 4))
+        {
+            Debug.Log("Unit on connected gateway");
+        }
+        else
+        {
+            Debug.Log("Unit NOT on gateway");
+        }
     }
 
-    void CreateAbandonedNest()
+    void CheckIfGatewayConnected(int x, int y)
     {
-        int mapSizeX = 4;
-        int mapSizeY = 4;
-
-        GenerateMapData(mapSizeX, mapSizeY);
-
-        tiles[0, 0] = 1;
-        tiles[3, 0] = 1;
-        tiles[2, 2] = 1;
-        tiles[1, 0] = 3;
-        tiles[2, 0] = 3;
-        tiles[3, 2] = 3;
-        tiles[3, 3] = 3;
-
-        GeneratePathfindingGraph(mapSizeX, mapSizeY);
-        GenerateMapVisual(mapSizeX, mapSizeY);
+        //GameObject
     }
 
-    void GenerateMapData(int mapSizeX, int mapSizeY)
+    //void CreateAbandonedNest()
+    //{
+    //    int mapSizeX = 4;
+    //    int mapSizeY = 4;
+
+    //    GenerateMapData(mapSizeX, mapSizeY);
+
+    //    tiles[0, 0] = 1;
+    //    tiles[3, 0] = 1;
+    //    tiles[2, 2] = 1;
+    //    tiles[1, 0] = 3;
+    //    tiles[2, 0] = 3;
+    //    tiles[3, 2] = 3;
+    //    tiles[3, 3] = 3;
+
+    //    GeneratePathfindingGraph(mapSizeX, mapSizeY);
+    //    GenerateMapVisual(mapSizeX, mapSizeY);
+    //}
+
+    //void GenerateMapData(int mapSizeX, int mapSizeY)
+    //{
+    //    tiles = new int[mapSizeX, mapSizeY];
+
+    //    int x, y;
+
+    //    for (x = 0; x < mapSizeX; x++)
+    //    {
+    //        for (y = 0; y < mapSizeY; y++)
+    //        {
+    //            tiles[x, y] = 0;
+    //        }
+    //    }
+    //}
+
+    void GenerateMapData(int mapSizeX, int mapSizeY, int startingPointX, int startingPointY)
     {
-        tiles = new int[mapSizeX, mapSizeY];
+        //tiles = new int[mapSizeX, mapSizeY];
+
+        for (int x = startingPointX; x < (startingPointX + mapSizeX); x++)
+        {
+            for (int y = startingPointY; y < (startingPointY + mapSizeY); y++)
+            {
+                tiles[x, y] = 0;
+            }
+        }
+    }
+
+    void GenerateMapData(int mapSize)
+    {
+        //tiles = new int[mapSize, mapSize];
 
         int x, y;
 
-        for (x = 0; x < mapSizeX; x++)
+        for (x = 0; x < mapSize; x++)
         {
-            for (y = 0; y < mapSizeY; y++)
+            for (y = 0; y < mapSize; y++)
             {
-                tiles[x, y] = 0;
+                tiles[x, y] = 5;
             }
         }
     }
@@ -103,6 +253,7 @@ public class TileMap : MonoBehaviour
 
     bool UnitCanWalkOnTile(int x, int y)
     {
+        //Debug.Log("DEBUG FUNCTION UnitCanWalkOnTile");
         //TileType tt = tileTypes[tiles[x, y]];
         //return tt.isWalkable;
         return tileTypes[tiles[x, y]].isWalkable;
@@ -110,7 +261,7 @@ public class TileMap : MonoBehaviour
 
     void GeneratePathfindingGraph(int mapSizeX, int mapSizeY)
     {
-        graph = new Node[mapSizeX, mapSizeY];
+        //graph = new Node[mapSizeX, mapSizeY];
 
         for (int x = 0; x < mapSizeX; x++)
         {
@@ -175,6 +326,111 @@ public class TileMap : MonoBehaviour
             }
         }
     }
+    void GeneratePathfindingGraph(int mapSizeX, int mapSizeY, int startingPointX, int startingPointY)
+    {
+        //graph = new Node[mapSizeX, mapSizeY];
+
+        for (int x = startingPointX; x < (startingPointX + mapSizeX); x++)
+        {
+            for (int y = startingPointY; y < (startingPointY + mapSizeY); y++)
+            {
+                graph[x, y] = new Node();
+                graph[x, y].x = x;
+                graph[x, y].y = y;
+                //Debug.Log("Pathfinding - Created Node at position: " + x + ", " + y);
+            }
+        }
+
+        //Adding neighbours to connect to current tile
+        for (int x = startingPointX; x < (startingPointX + mapSizeX); x++)
+        {
+            for (int y = startingPointY; y < (startingPointY + mapSizeY); y++)
+            {
+
+                ////four way connection
+                //if (x > 0)
+                //    //Add to the left
+                //    graph[x, y].neighbours.Add(graph[x - 1, y]);
+                //if (x < mapSizeX - 1)
+                //    //Add to the right
+                //    graph[x, y].neighbours.Add(graph[x + 1, y]);
+                //if (y > 0)
+                //    //Add to the bottom
+                //    graph[x, y].neighbours.Add(graph[x, y - 1]);
+                //if (y < mapSizeY - 1)
+                //    //Add to the top
+                //    graph[x, y].neighbours.Add(graph[x, y + 1]);
+
+                ////eight way connection - Whole map
+                //if (x > 0)
+                //{
+                //    //Add to the left
+                //    graph[x, y].neighbours.Add(graph[x - 1, y]);
+                //    if (y > 0)
+                //        //Add to the bottom left
+                //        graph[x, y].neighbours.Add(graph[x - 1, y - 1]);
+                //    if (y < mapSizeY - 1)
+                //        //Add to the top left
+                //        graph[x, y].neighbours.Add(graph[x - 1, y + 1]);
+                //}
+
+                //eight way connection - Room specific
+                if (x > startingPointX)
+                {
+                    //Add to the left
+                    graph[x, y].neighbours.Add(graph[x - 1, y]);
+                    if (y > startingPointY)
+                        //Add to the bottom left
+                        graph[x, y].neighbours.Add(graph[x - 1, y - 1]);
+                    if (y < (startingPointY + mapSizeY - 1))
+                        //Add to the top left
+                        graph[x, y].neighbours.Add(graph[x - 1, y + 1]);
+                }
+
+                ////Whole map
+                //if (x < mapSizeX - 1)
+                //{
+                //    //Add to the right
+                //    graph[x, y].neighbours.Add(graph[x + 1, y]);
+                //    if (y > 0)
+                //        //Add to the bottom right
+                //        graph[x, y].neighbours.Add(graph[x + 1, y - 1]);
+                //    if (y < mapSizeY - 1)
+                //        //Add to the top right
+                //        graph[x, y].neighbours.Add(graph[x + 1, y + 1]);
+                //}
+
+                //Room specific
+                if (x < (startingPointX + mapSizeX - 1))
+                {
+                    //Add to the right
+                    graph[x, y].neighbours.Add(graph[x + 1, y]);
+                    if (y > startingPointY)
+                        //Add to the bottom right
+                        graph[x, y].neighbours.Add(graph[x + 1, y - 1]);
+                    if (y < (startingPointY + mapSizeY - 1))
+                        //Add to the top right
+                        graph[x, y].neighbours.Add(graph[x + 1, y + 1]);
+                }
+
+                ////Whole map
+                //if (y > 0)
+                //    //Add to the bottom
+                //    graph[x, y].neighbours.Add(graph[x, y - 1]);
+                //if (y < mapSizeY - 1)
+                //    //Add to the top
+                //    graph[x, y].neighbours.Add(graph[x, y + 1]);
+
+                //Room specific
+                if (y > startingPointY)
+                    //Add to the bottom
+                    graph[x, y].neighbours.Add(graph[x, y - 1]);
+                if (y < (startingPointY + mapSizeY - 1))
+                    //Add to the top
+                    graph[x, y].neighbours.Add(graph[x, y + 1]);
+            }
+        }
+    }
     void GenerateMapVisual(int mapSizeX, int mapSizeY)
     {
         for (int x = 0; x < mapSizeX; x++)
@@ -182,9 +438,35 @@ public class TileMap : MonoBehaviour
             for (int y = 0; y < mapSizeY; y++)
             {
                 TileType tt = tileTypes[tiles[x, y]];
+                //Debug.Log("Value of tt.VisualPrefab: " + tt.tileVisualPrefab.ToString());
                 GameObject go = (GameObject)Instantiate(tt.tileVisualPrefab, new Vector3(x, y, 0), Quaternion.identity);
 
                 TileClickHandler ch = go.GetComponent<TileClickHandler>();
+                ch.tileX = x;
+                ch.tileY = y;
+                ch.map = this;
+            }
+        }
+    }
+    //TODO: Edit this to handle overwriting old rooms - Placing a new room and destroying the one which is overlapping
+    void GenerateMapVisual(int mapSizeX, int mapSizeY, int startingPointX, int startingPointY)
+    {
+        int roomSizeX = startingPointX + mapSizeX;
+        int roomSizeY = startingPointY + mapSizeY;
+        Room entrance = new Room("Entrance", startingPointX, startingPointY, roomSizeX, roomSizeY, 1, 1);
+        //TODO: Test this room object - work out why a second object is being created
+        GameObject room = Instantiate(entrance.room, new Vector3(startingPointX, startingPointY, 0), Quaternion.identity);
+
+        for (int x = startingPointX; x < roomSizeX; x++)
+        {
+            for (int y = startingPointY; y < roomSizeY; y++)
+            {
+                TileType tt = tileTypes[tiles[x, y]];
+                GameObject tile = (GameObject)Instantiate(tt.tileVisualPrefab, new Vector3(x, y, 0), Quaternion.identity, room.transform);
+                //GameObject tile = tt.tileVisualPrefab;
+                //Debug.Log("tile type = " + tt.name.ToString());
+
+                TileClickHandler ch = tile.GetComponent<TileClickHandler>();
                 ch.tileX = x;
                 ch.tileY = y;
                 ch.map = this;
@@ -197,7 +479,7 @@ public class TileMap : MonoBehaviour
         return new Vector3(x, y, 0);
     }
 
-    public void GeneratePathTo(int x, int y)
+    public void GeneratePathTo(int targetX, int targetY)
     {
         selectedUnit.GetComponent<Unit>().currentPath = null;
         Dictionary<Node, float> dist = new Dictionary<Node, float>();
@@ -210,7 +492,7 @@ public class TileMap : MonoBehaviour
                             selectedUnit.GetComponent<Unit>().tileY
                             ];
 
-        Node target = graph[x, y];
+        Node target = graph[targetX, targetY];
 
         if (!UnitCanWalkOnTile(target.x, target.y))
         {
@@ -223,6 +505,10 @@ public class TileMap : MonoBehaviour
 
         foreach (Node v in graph)
         {
+            //Skip nodes if they are null
+            if (v == null)
+                continue;
+
             if (v != source)
             {
                 dist[v] = Mathf.Infinity;

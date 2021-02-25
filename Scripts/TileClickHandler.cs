@@ -9,7 +9,7 @@ public class TileClickHandler : MonoBehaviour
     public TileMap map;
     void OnMouseUp()
     {
-        Debug.Log("Click");
+        Debug.Log("Tile Coords: " + tileX + ", " + tileY);
 
         map.GeneratePathTo(tileX, tileY);
     }

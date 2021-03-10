@@ -14,8 +14,10 @@ public class TileMap : MonoBehaviour
     public GameObject nextRoomTemplate;
     public bool isCurrentRoom;
     public Vector3 nextRoomPosition;
+    public int placementGatewayX, placementGatewayY;
+    public Facing placementGatewayFacing;
 
-    int mapSize = 100;
+    readonly int mapSize = 100;
     int[,] tiles = new int [100, 100];
     //int[,] tiles;
     Node[,] graph = new Node[100, 100];
@@ -82,12 +84,14 @@ public class TileMap : MonoBehaviour
 
         //nextRoomTemplate = Instantiate(Resources.Load("Prefabs/NextRoom", typeof(GameObject))) as GameObject;
         //GameObject prefab;
-        nextRoomTemplate = Resources.Load<GameObject>("Prefabs/NestRoom") as GameObject;
+        nextRoomTemplate = Resources.Load<GameObject>("Prefabs/NestRoom_EastSouth");
         RoomTemplate nextRoom = new RoomTemplate("Nest", 4, 4, 1, 0, Facing.South, 3, 2, Facing.East);
         Debug.Log("Gateway One x Position " + nextRoom.GatewayOneX);
         //Instantiate(nextRoomTemplate, new Vector3(x, y, 0), Quaternion.identity);
         //Debug.Log(prefab.transform);
         //GameObject nextRoomTemplate = Instantiate(prefab, new Vector3(x, y, 0), Quaternion.identity);
+
+        //TODO: Put this into a separate method, so it can be called by the RoomPlacement Class
 
         if (tiles[x, y] == 3)
         {
@@ -98,11 +102,11 @@ public class TileMap : MonoBehaviour
                 if (tiles[x, y + 1] == 5)
                 {
                     Debug.Log("Above tiles are room entrances");
-                    Instantiate(nextRoomTemplate, new Vector3((x - 1) - nextRoom.GatewayOneX, y + 1, 0), Quaternion.identity);
-                    //foreach(Transform child in nextRoomTemplate.transform)
-                    //{
-                    //    child.
-                    //}
+                    placementGatewayX = x - 1;
+                    placementGatewayY = y + 1;
+                    placementGatewayFacing = Facing.South;
+                    Instantiate(nextRoomTemplate, new Vector3(placementGatewayX - nextRoom.GatewayOneX, placementGatewayY, 0), Quaternion.identity);
+
                     //TODO: Add code to handle Room placement
                     //Check that the new room gateways are sitting on acceptable tiles
                     //Allow room rotation and check for collision with existing room
@@ -111,6 +115,9 @@ public class TileMap : MonoBehaviour
                 else if (tiles[x, y - 1] == 5)
                 {
                     Debug.Log("Below tiles are room entrances");
+                    placementGatewayX = x - 1;
+                    placementGatewayY = y - 1;
+                    placementGatewayFacing = Facing.North;
                     Instantiate(nextRoomTemplate, new Vector3((x - 1) - nextRoom.GatewayOneX, y - 1, 0), Quaternion.identity);
                 }
             } 
@@ -120,12 +127,18 @@ public class TileMap : MonoBehaviour
                 if (tiles[x, y + 1] == 5)
                 {
                     Debug.Log("Above tiles are room entrances");
+                    placementGatewayX = x;
+                    placementGatewayY = y + 1;
+                    placementGatewayFacing = Facing.South;
                     //Instantiate(nextRoomTemplate, new Vector3(x, y + 1, 0), Quaternion.identity);
                     Instantiate(nextRoomTemplate, new Vector3(x - nextRoom.GatewayOneX, y + 1, 0), Quaternion.identity);
                 }
                 else if (tiles[x, y - 1] == 5)
                 {
                     Debug.Log("Below tiles are room entrances");
+                    placementGatewayX = x;
+                    placementGatewayY = y - 1;
+                    placementGatewayFacing = Facing.North;
                     Instantiate(nextRoomTemplate, new Vector3(x - nextRoom.GatewayOneX, y - 1, 0), Quaternion.identity);
                 }
             }
@@ -135,11 +148,17 @@ public class TileMap : MonoBehaviour
                 if (tiles[x + 1, y] == 5)
                 {
                     Debug.Log("Right tiles are room entrances");
+                    placementGatewayX = x + 1;
+                    placementGatewayY = y - 1;
+                    placementGatewayFacing = Facing.West;
                     Instantiate(nextRoomTemplate, new Vector3(x + 1, (y - 1) - nextRoom.GatewayOneY, 0), Quaternion.identity);
                 }
                 else if (tiles[x - 1, y] == 5)
                 {
                     Debug.Log("Left tiles are room entrances");
+                    placementGatewayX = x - 1;
+                    placementGatewayY = y - 1;
+                    placementGatewayFacing = Facing.East;
                     Instantiate(nextRoomTemplate, new Vector3(x - 1, (y - 1) - nextRoom.GatewayOneY, 0), Quaternion.identity);
                 }
             }
@@ -149,11 +168,17 @@ public class TileMap : MonoBehaviour
                 if (tiles[x + 1, y] == 5)
                 {
                     Debug.Log("Right tiles are room entrances");
+                    placementGatewayX = x + 1;
+                    placementGatewayY = y;
+                    placementGatewayFacing = Facing.West;
                     Instantiate(nextRoomTemplate, new Vector3(x + 1, y - nextRoom.GatewayOneY, 0), Quaternion.identity);
                 }
                 else if (tiles[x - 1, y] == 5)
                 {
                     Debug.Log("Left tiles are room entrances");
+                    placementGatewayX = x - 1;
+                    placementGatewayY = y;
+                    placementGatewayFacing = Facing.East;
                     Instantiate(nextRoomTemplate, new Vector3(x - 1, y - nextRoom.GatewayOneY, 0), Quaternion.identity);
                 }
             }
